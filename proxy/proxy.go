@@ -30,9 +30,16 @@ type ProxyServer struct {
 	failsCount         int64
 
 	// Stratum
-	sessionsMu sync.RWMutex
-	sessions   map[*Session]struct{}
-	timeout    time.Duration
+	sessionsMu         sync.RWMutex
+	sessions           map[*Session]struct{}
+	timeout            time.Duration
+	Extranonce         string
+}
+
+type jobDetails struct {
+	JobID string
+	SeedHash string
+	HeaderHash string
 }
 
 type Session struct {
@@ -43,6 +50,8 @@ type Session struct {
 	sync.Mutex
 	conn  *net.TCPConn
 	login string
+	subscriptionID string
+	JobDeatils jobDetails
 }
 
 func NewProxy(cfg *Config, backend *storage.RedisClient) *ProxyServer {
@@ -64,6 +73,10 @@ func NewProxy(cfg *Config, backend *storage.RedisClient) *ProxyServer {
 	if cfg.Proxy.Stratum.Enabled {
 		proxy.sessions = make(map[*Session]struct{})
 		go proxy.ListenTCP()
+	}
+
+	if cfg.Proxy.StratumNiceHash.Enabled {
+		go proxy.ListenNiceHashTCP()
 	}
 
 	proxy.fetchBlockTemplate()

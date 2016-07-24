@@ -5,3 +5,4 @@ ether-pool
 ether-pool.exe
 logs
 tools
+*.iml
